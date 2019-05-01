@@ -1,0 +1,12 @@
+# Common
+.DS_Store
+node_modules
+
+# Application
+lib
+.env
+*.pem
+*.crt
+*.csr
+*.a
+*.o

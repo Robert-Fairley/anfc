@@ -1,0 +1,42 @@
+{
+  "name": "apple-news-format-compiler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "ts-mocha tests/**/*.test.ts",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf ./lib",
+    "compile": "tsc"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm test",
+      "pre-push": "npm run lint"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/libxmljs": "^0.18.3",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^11.13.8",
+    "@typescript-eslint/eslint-plugin": "^1.7.0",
+    "@typescript-eslint/parser": "^1.7.0",
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.2.0",
+    "husky": "^2.1.0",
+    "mocha": "^6.1.4",
+    "prettier": "^1.17.0",
+    "ts-mocha": "^6.0.0",
+    "tsdoc": "0.0.4",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {
+    "apple-news-format": "^0.1.7",
+    "libxmljs": "^0.19.5"
+  }
+}
