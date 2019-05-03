@@ -11,11 +11,29 @@ describe("Debug Class", () => {
 
             console.log(">> Log Test Messages:");
 
-            expect(Debug.log<string>("OK")).to.equal(undefined);
-            expect(Debug.log<string>("OK", true)).to.equal("OK");
-            expect(Debug.log<number>(42)).to.equal(undefined);
+            expect(debug.log<string>("OK")).to.equal(undefined);
+            expect(debug.log<string>("OK", null, true)).to.equal("OK");
+            expect(debug.log<number>(42)).to.equal(undefined);
+            expect(debug.log("OK", "idForOK", true)).to.equal("OK");
 
             console.log(">> End of Log Test Messages");
+
+            done();
+        });
+    });
+
+    describe("#error", () => {
+
+        it("Should run and return only if flagged", (done: MochaDone) => {
+
+            console.log(">> Error Test Messages:");
+
+            expect(debug.error<string>("ERROR")).to.equal(undefined);
+            expect(debug.error<string>("ERROR", null, true)).to.equal("ERROR");
+            expect(debug.error<number>(42)).to.equal(undefined);
+            expect(debug.error("ERROR", "idForError", true)).to.equal("ERROR");
+
+            console.log(">> End of Error Test Messages");
 
             done();
         });
@@ -103,6 +121,5 @@ describe("Debug Class", () => {
             done();
         });
     });
-
 
 });

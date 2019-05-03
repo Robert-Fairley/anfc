@@ -21,6 +21,7 @@ export type ProcessTraceStack = ProcessTraceValue[];
 
 /**
  * Utility methods and properties for use in the compiler debug mode.
+ * @todo write method (static or instance) to generate process id outside of log/error method
  */
 export default class Debug {
     /** @protected */
@@ -31,22 +32,42 @@ export default class Debug {
     public numberOfErrors: number = this.Errors.length;
 
     /**
-     * Logs a message and optionally writes a message tp
+     * Logs a message and optionally returns the message
      * @param msg - Debug message or value
      * @param ret - Flag to set whether or not the passed message is returned
      * @returns Either the provided message for utilization or void
      * @public
-     * @static
      */
-    public static log<T>(msg?: T, ret?: boolean): T | void {
+    public log<T>(msg?: T, processId?: string, ret?: boolean): T | void {
         const returnValue: T | void = ret ? msg : void 0;
+        const isoTimestamp: string = new Date().toISOString();
 
         if (typeof window === "undefined") {
-            process.stdout.write(`${msg}\n`);
+            process.stdout.write(`${isoTimestamp} - ${processId + ' - '||''}${msg}\n`);
             return returnValue;
         }
 
-        console.log(msg);
+        console.debug(msg);
+        return returnValue;
+    }
+
+    /**
+     * Logs an error and optionally returns the error
+     * @param msg - Error object, message or value
+     * @param ret - Flag to set whether or not the passed value is returned
+     * @returns Either the provied error for utilization or void
+     * @public
+     */
+    public error<T>(msg?: T, processId?: string, ret?: boolean): T | void {
+        const returnValue: T | void = ret ? msg : void 0;
+        const isoTimestamp: string = new Date().toISOString();
+
+        if (typeof window === "undefined") {
+            process.stderr.write(`${isoTimestamp} - ${processId + ' - '||''}${msg}\n`);
+            return returnValue;
+        }
+
+        console.error(msg);
         return returnValue;
     }
 

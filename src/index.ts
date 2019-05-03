@@ -1,7 +1,17 @@
 import libxmljs from "libxmljs";
 import AppleNews from 'apple-news-format/lib';
 import ArticleDataFormatError from "./error/article-data";
-import Debug from "./utils/debug";
+import {
+    Debug,
+    extractFileName,
+} from "./utils";
+
+export interface XMLLibElementToStringOpts {
+    declaration: boolean;
+    selfCloseEmpty: boolean;
+    whitespace: boolean;
+    type: "xml" | "html";
+}
 
 export type ComponentRoleList = string[];
 
@@ -18,22 +28,15 @@ export interface IAppleNewsFormatCompiler {}
 
 export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler {
 
-    protected debugMode:   boolean = false;
+    protected debugMode:   boolean                          = false;
+    protected debugger:    Debug | null                     = null;
+    private   processed:   boolean                          = false;
     private   article:     AppleNews.ArticleDocument | null = null;
     private   html:        libxmljs.Document;
     private   processTime: number;
 
     protected Element: ElementMappings = {
-        div: [
-            "aside",
-            "chapter",
-            "collection_display",
-            "container",
-            "divider",
-            "header",
-            "horizontal_stack_display",
-            "section",
-        ],
+        div: [],
         span: [],
         p: [],
     };
@@ -48,6 +51,9 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
         if (!!options) {
             this.debug = !!options.debug;
         }
+
+        if (this.debug)
+            this.debugger = new Debug();
     }
 
     /**
@@ -87,22 +93,6 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     }
 
     /**
-     * 
-     * @param role 
-     */
-    private deriveElementType(role: string): string {
-        let output: string = "span";
-
-        for (let key of Object.keys(this.Element)) {
-            if (this.Element[key].includes(role)) {
-                output = key;
-            }
-        }
-
-        return output;
-    }
-
-    /**
      * Generates the base of an HTML document as a libxmljs Document from
      * a string template.
      * @returns {libxmljs.Document} -  The generated document object
@@ -110,19 +100,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
      */
     private setupDocument(): libxmljs.Document {
         const documentTemplate: string = 
-            `<!DOCTYPE html>
-            <html>
-                    <head>
-                        <meta charset="utf-8" />
-                        <title></title>
-                    </head>
-
-                    <body>
-                        <!-- Begin Apple News HTML Document -->
-
-                        <!--<script></script>-->
-                    </body>
-            </html>`;
+`<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title></head><body><!-- Begin Apple News HTML Document --></body></html>`;
 
         const document: libxmljs.Document = libxmljs.parseHtml(documentTemplate);
 
@@ -134,21 +112,91 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
 
     /**
      * 
+     * @param document 
+     * @param component 
+     * @param element 
+     */
+    private insertComponent(document: libxmljs.Document, component: AppleNews.Component, element?: libxmljs.Element): libxmljs.Element {
+        const parent = element || (document.root() as libxmljs.Element).get("//body");
+        const newElement = new libxmljs.Element(document, "div");
+
+        const elementStringOpts: boolean | XMLLibElementToStringOpts = { 
+            declaration: false,
+            selfCloseEmpty: true,
+            whitespace: true,
+            type: "html",
+        };
+        
+        if ((component as AppleNews.Container).components) {
+            let subComponents = (component as AppleNews.Container).components;
+            let tmp = [];
+
+            for (let subComponent of subComponents as AppleNews.Component[]) {
+                tmp.push(
+                    this.insertComponent(document, subComponent, newElement).toString(elementStringOpts),
+                );
+            }
+        } else if ((component as AppleNews.Image).URL) {
+            let tmp = new libxmljs.Element(document, "img");
+            tmp.attr({ class: component.role as string });
+            tmp.attr({ src: (component as AppleNews.Image).URL });
+            tmp.attr({ alt: (component as any).caption || "" });
+            //tmp.attr({ id: idFunc() })
+
+            (newElement as any).cdata(tmp.toString(elementStringOpts));
+        } else {
+            newElement.attr({ class: component.role as string });
+            (newElement as any).cdata((component as AppleNews.Body).text);
+            //newElement.attr({ id: idFunc() })
+        }
+
+        (parent as any).cdata(newElement.toString(elementStringOpts));
+
+        return newElement;
+    }
+
+    /**
+     * 
      * @param article 
      */
-    private processArticle(article?: AppleNews.ArticleDocument): any {
-        if (!this.article || !article)
+    private processArticle(): any {
+        if (this.processed) {
+            this.debug
+                && (this.debugger as Debug).log("Article already processed. Reset compiler to try again.");
+            return void 0;
+        }
+        
+        let article: AppleNews.ArticleDocument;
+        
+        if (this.article == null)
             throw new ArticleDataFormatError("Article data has not been loaded.");
+        else
+            article = this.article;
 
         let processTimer = setInterval(() => {
             this.processTime++;
         }, 100);
-     
 
+        const components = article.components;
+
+        for (let component of components) {
+            this.insertComponent(this.html, component);
+        }
         
         clearInterval(processTimer);
 
-        this.debug && console.log(`Article processing finished in ${this.processTime}ms`);
+        this.debug
+            && (this.debugger as Debug).log(`Article processing finished in ${this.processTime}ms`);
+
+        this.processed = true;
+        return this.html;
+    }
+
+    private reset(): void {
+        this.html = this.setupDocument();
+        this.processed = false;
+        
+        return void 0;
     }
 
     /**

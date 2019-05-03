@@ -27,3 +27,8 @@ TBD
 ## Documentation
 
 TBD
+
+
+## Development Notes
+
+[See Notes](NOTES.md)
