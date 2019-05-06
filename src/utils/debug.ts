@@ -90,14 +90,10 @@ export default class Debug {
 
     /**
      * Provides a dump of the error stack and optionally clears the stack.
-     * @param clearStack - Flag to be set true if the stack is to be emptied upon call
      * @returns The current error stack
      * @public
      */
-    public dumpErrorStack(clearStack?: boolean): ErrorStack {
-        if (!!clearStack)
-            this.clearErrorStack();
-        
+    public dumpErrorStack(): ErrorStack {
         return this.Errors;
     }
 

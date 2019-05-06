@@ -74,17 +74,8 @@ describe("Debug Class", () => {
             expect(dump.includes("one")).to.be.true;
             expect(dump.includes("two")).to.be.true;
 
-            done();
-        });
-
-        it("Should clear the stack if passed the command to clear", (done: MochaDone) => {
-
-            expect(debug.numberOfErrors).to.equal(2);
-
-            debug.dumpErrorStack(true);
-
-            expect(debug.numberOfErrors).to.equal(0);
-
+            debug.clearErrorStack();
+            
             done();
         });
     });

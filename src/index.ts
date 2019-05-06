@@ -32,7 +32,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     protected debugger:    Debug | null                     = null;
     private   processed:   boolean                          = false;
     private   article:     AppleNews.ArticleDocument | null = null;
-    private   html:        libxmljs.Document;
+    private   document:        libxmljs.Document;
     private   processTime: number;
 
     protected Element: ElementMappings = {
@@ -44,7 +44,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     /** @constructor */
     public constructor(data?: AppleNews.ArticleDocument, options?: ICompilerOptions) {
         this.article = data || null;
-        this.html = this.setupDocument();
+        this.document = this.setupDocument();
 
         this.processTime = 0;
 
@@ -93,9 +93,25 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     }
 
     /**
+     * Gets the produced HTML DOM as a strign
+     * @returns The generated HTML as a string
+     */
+    public html() {
+        return this.document.toString(true);
+    }
+
+    /**
+     * Gets the produced DOm
+     * @returns The `libxmljs` Document object containing the generated DOM
+     */
+    public dom() {
+        return this.document;
+    }
+
+    /**
      * Generates the base of an HTML document as a libxmljs Document from
      * a string template.
-     * @returns {libxmljs.Document} -  The generated document object
+     * @returns The generated document object
      * @private
      */
     private setupDocument(): libxmljs.Document {
@@ -180,7 +196,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
         const components = article.components;
 
         for (let component of components) {
-            this.insertComponent(this.html, component);
+            this.insertComponent(this.document, component);
         }
         
         clearInterval(processTimer);
@@ -189,11 +205,11 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
             && (this.debugger as Debug).log(`Article processing finished in ${this.processTime}ms`);
 
         this.processed = true;
-        return this.html;
+        return this.document;
     }
 
     private reset(): void {
-        this.html = this.setupDocument();
+        this.document = this.setupDocument();
         this.processed = false;
         
         return void 0;
