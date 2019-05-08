@@ -27,5 +27,12 @@ doc = {
         ]},
         { role: "body", text: "This is just footer text. ALl done." },
     ],
+    componentStyles: {
+        lala: {
+            fontSize: 1.2,
+            fontStyle: "italic",
+        }
+    },
+    componentTextStyles: {},
 };
 ```

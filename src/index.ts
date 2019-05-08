@@ -5,6 +5,7 @@ import {
     Debug,
     extractFileName,
 } from "./utils";
+import convertCase from './utils/convert-case';
 
 export interface XMLLibElementToStringOpts {
     declaration: boolean;
@@ -32,7 +33,8 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     protected debugger:    Debug | null                     = null;
     private   processed:   boolean                          = false;
     private   article:     AppleNews.ArticleDocument | null = null;
-    private   document:        libxmljs.Document;
+    private   document:    libxmljs.Document;
+    private   styles:      object; // @todo replace with proper interface
     private   processTime: number;
 
     protected Element: ElementMappings = {
@@ -45,6 +47,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
     public constructor(data?: AppleNews.ArticleDocument, options?: ICompilerOptions) {
         this.article = data || null;
         this.document = this.setupDocument();
+        this.styles = {};
 
         this.processTime = 0;
 
@@ -126,10 +129,57 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
         return document;
     }
 
+    private parseStyleObject(styleObject: any): any {
+        let output: string = '';
+
+        
+    }
+
+    private setupStyles(): libxmljs.Element {
+        const nonStyleFields: string[] = [
+            "title",
+            "version",
+            "layout",
+            "metadata",
+            "components",
+        ];
+        // Coercing the object type is not ideal. Try and find a smarter way of defining this.
+        const componentStyles = Object.keys((this.article as any).componentStyles as AppleNews.ComponentStyle[]),
+              componentTextStyles = Object.keys((this.article as any).componentTextStyles as AppleNews.ComponentTextStyle[]);
+        const styles = new libxmljs.Element(this.document, "style");
+
+        for (const field of componentStyles) {
+            if (!nonStyleFields.includes(field)) {
+                (styles as any).cdata(`
+                    .${field} ${this.generateCssClass((this.article as any).componentStyles[field])}
+                `)
+            }
+        }
+
+        return styles;
+    }
+
+    /**
+     * Converts an Apple News style object into a series of CSS fields
+     * @param cssObject Apple news style object
+     * @returns Converted CSS string
+     */
+    private generateCssClass(cssObject: {[k: string]: string | number}): string {
+        let output: string = '{';
+        let value;
+
+        for (const field of Object.keys(cssObject)) {
+            value = typeof cssObject[field] === "string" ? cssObject[field] : `${cssObject[field]}`;
+            output += `${convertCase(field).replace("name", "family")}: ${value};`;
+        }
+
+        return `${output}}`;
+    }
+
     /**
      * 
      * @param document 
-     * @param component 
+     * @param component .
      * @param element 
      */
     private insertComponent(document: libxmljs.Document, component: AppleNews.Component, element?: libxmljs.Element): libxmljs.Element {
@@ -155,7 +205,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
         } else if ((component as AppleNews.Image).URL) {
             let tmp = new libxmljs.Element(document, "img");
             tmp.attr({ class: component.role as string });
-            tmp.attr({ src: (component as AppleNews.Image).URL });
+            tmp.attr({ src: extractFileName((component as AppleNews.Image).URL) });
             tmp.attr({ alt: (component as any).caption || "" });
             //tmp.attr({ id: idFunc() })
 
@@ -208,7 +258,7 @@ export default class AppleNewsFormatCompiler implements IAppleNewsFormatCompiler
         return this.document;
     }
 
-    private reset(): void {
+    public reset(): void {
         this.document = this.setupDocument();
         this.processed = false;
         
