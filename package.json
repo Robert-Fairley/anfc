@@ -29,7 +29,7 @@
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.2.0",
     "husky": "^2.1.0",
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "prettier": "^1.17.0",
     "ts-mocha": "^6.0.0",
     "tsdoc": "0.0.4",
